@@ -49,7 +49,7 @@ def on_predict_start(predictor):
     predictor.tracker_outputs = [None] * predictor.dataset.bs
     # colab動作用にパスを変更
     method = opt.tracking_method
-    predictor.args.tracking_config = f'{base_dir}/boxmot/{method}/configs/{method}.yaml'
+    predictor.args.tracking_config = f'{base_dir}/boxmot/configs/{method}.yaml'
     for i in range(predictor.dataset.bs):
         tracker = create_tracker(
             predictor.args.tracking_method,
