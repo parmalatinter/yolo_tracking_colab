@@ -1,12 +1,10 @@
- # https://github.com/ultralytics/ultralytics/issues/1429#issuecomment-1519239409
+# https://github.com/ultralytics/ultralytics/issues/1429#issuecomment-1519239409
 
 import argparse
 from pathlib import Path
 
 import cv2
 import torch
-import os
-import numpy as np
 
 from boxmot.tracker_zoo import create_tracker
 from boxmot.utils import ROOT, WEIGHTS
@@ -29,24 +27,15 @@ from utils import write_MOT_results
 
 from boxmot.utils import EXAMPLES
 
-# from supervision import show_frame_in_notebook
-from supervision.draw.color import ColorPalette
-from supervision import VideoInfo, Detections, BoxAnnotator, PolygonZone, ColorPalette, PolygonZoneAnnotator
-from PIL import Image, ImageDraw, ImageFont
 
 def on_predict_start(predictor):
-
-    # 現在のディレクトリを取得
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-
-    # 現在のディレクトリの親ディレクトリを取得
-    base_dir = os.path.dirname(current_dir)
-
     predictor.trackers = []
     predictor.tracker_outputs = [None] * predictor.dataset.bs
-    # colab動作用にパスを変更
-    method = opt.tracking_method
-    predictor.args.tracking_config = f'{base_dir}/boxmot/{method}/configs/{method}.yaml'
+    predictor.args.tracking_config = \
+        ROOT /\
+        'boxmot' /\
+        'configs' /\
+        (opt.tracking_method + '.yaml')
     for i in range(predictor.dataset.bs):
         tracker = create_tracker(
             predictor.args.tracking_method,
@@ -54,9 +43,10 @@ def on_predict_start(predictor):
             predictor.args.reid_model,
             predictor.device,
             predictor.args.half,
-            None
+            predictor.args.per_class
         )
         predictor.trackers.append(tracker)
+
 
 @torch.no_grad()
 def run(args):
@@ -79,41 +69,6 @@ def run(args):
     if not predictor.model:
         predictor.setup_model(model=model.model, verbose=False)
     predictor.setup_source(predictor.args.source)
-
-    video_info = VideoInfo.from_video_path(predictor.args.source)
-    print('video_info', video_info)
-    
-    # 現在のディレクトリを取得
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-
-    # 現在のディレクトリの親ディレクトリを取得
-    base_dir = os.path.dirname(current_dir)
-
-    # zone
-    # 保存した配列を読み込む
-    polygon = np.load(f"{base_dir}/{predictor.args.zone_config_path}", allow_pickle=True)
-    zones = [
-        PolygonZone(
-            polygon=polygon,
-            frame_resolution_wh=video_info.resolution_wh
-        )
-        for polygon
-        in polygon
-    ]
-
-    colors = ColorPalette.default()
-    zone_annotators = [
-        PolygonZoneAnnotator(
-            zone=zone,
-            color=colors.by_idx(index),
-            thickness=1,
-            text_thickness=1,
-            text_scale=1
-        )
-        for index, zone
-        in enumerate(zones)
-    ]
-
 
     predictor.args.imgsz = check_imgsz(predictor.args.imgsz, stride=model.model.stride, min_dim=2)  # check image size
     predictor.save_dir = increment_path(Path(predictor.args.project) /
@@ -221,25 +176,6 @@ def run(args):
                         i,
                     )
 
-                # detect zone
-                for zone, zone_annotator in zip(zones, zone_annotators):
-                    detections = Detections.from_yolov8(predictor.results[i])
-                    mask = zone.trigger(detections=detections)
-                    detections_filtered = detections[mask]
-                    predictor.plotted_img = zone_annotator.annotate(scene=predictor.plotted_img, label=str(len(detections_filtered)))
-                    
-                    if len(detections_filtered):
-                        txt_path = predictor.txt_path.parent / f'zone-{p.stem}' 
-                        # todo write_MOT_resultsを使用しているが専用のメソッドを用意する
-                        # idが存在するものだけzoneの結果とする
-                        if predictor.results[i].boxes.id is not None:
-                            write_MOT_results(
-                                txt_path,
-                                predictor.results[i],
-                                frame_idx,
-                                i,
-                            )
-
                 if predictor.args.save_id_crops:
                     for d in predictor.results[i].boxes:
                         save_one_box(
@@ -330,8 +266,6 @@ def parse_opt():
                         help='The line width of the bounding boxes. If None, it is scaled to the image size.')
     parser.add_argument('--per-class', action='store_true',
                         help='not mix up classes when tracking')
-    parser.add_argument('--zone-config-path', type=Path, default='polygon.npy', 
-                        help='zone config path')
 
     opt = parser.parse_args()
     return opt
