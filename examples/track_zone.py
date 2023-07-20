@@ -242,14 +242,15 @@ def run(args):
 
                 if predictor.args.save_id_crops:
                     for d in predictor.results[i].boxes:
-                        save_one_box(
-                            d.xyxy,
-                            im0.copy(),
-                            file=(predictor.save_dir / 'crops' /
-                                  str(int(d.cls.cpu().numpy().item())) /
-                                  str(int(d.id.cpu().numpy().item())) / f'{p.stem}.jpg'),
-                            BGR=True
-                        )
+                        if d.id is not None:
+                            save_one_box(
+                                d.xyxy,
+                                im0.copy(),
+                                file=(predictor.save_dir / 'crops' /
+                                      str(int(d.cls.cpu().numpy().item())) /
+                                      str(int(d.id.cpu().numpy().item())) / f'{p.stem}.jpg'),
+                                BGR=True
+                            )
 
             # display an image in a window using OpenCV imshow()
             if predictor.args.show and predictor.plotted_img is not None:
