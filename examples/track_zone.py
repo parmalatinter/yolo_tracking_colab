@@ -54,7 +54,7 @@ def on_predict_start(predictor):
             predictor.args.reid_model,
             predictor.device,
             predictor.args.half,
-            None
+            predictor.args.per_class
         )
         predictor.trackers.append(tracker)
 
