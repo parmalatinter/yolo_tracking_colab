@@ -31,3 +31,17 @@ torchvision>=0.8.1
 # plotly                # hyper param importance and pareto front plots
 # kaleido
 # joblib
+
+# Polygon Zone ----------------------------------------------------------------
+supervision==0.11.1
+pandas-profiling==2.9.0
+
+# https://github.com/Delgan/loguru
+loguru
+# https://github.com/gatagat/lap
+lap
+# https://github.com/Lyken17/pytorch-OpCounter/
+thop
+
+# ultralytics ----------------------------------------------------------------
+ultralytics==8.0.132
