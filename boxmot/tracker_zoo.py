@@ -6,12 +6,15 @@ from boxmot.utils import BOXMOT
 
 
 def get_tracker_config(tracker_type):
-    tracking_config = \
-        BOXMOT /\
-        'configs' /\
-        (tracker_type + '.yaml')
-    return tracking_config
+    # 現在のディレクトリを取得
+    current_dir = os.path.dirname(os.path.realpath(__file__))
 
+    # 現在のディレクトリの親ディレクトリを取得
+    base_dir = os.path.dirname(current_dir)
+
+    # colab動作用にパスを変更
+    tracking_config = f'{base_dir}/{BOXMOT}/{tracker_type}/configs/{tracker_type}.yaml'
+    return tracking_config
 
 def create_tracker(tracker_type, tracker_config, reid_weights, device, half, per_class):
 
